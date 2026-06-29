@@ -77,7 +77,7 @@ const Login: React.FC = () => {
             <MessageSquare size={32} className="text-primary" />
           </div>
           <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">
-            CHATCRM <span className="text-primary">PRO</span>
+            CRM W <span className="text-primary">GROUP</span>
           </h1>
           <p className="text-text-muted font-medium">Ingresa tus credenciales para continuar</p>
         </div>
@@ -173,7 +173,7 @@ const Login: React.FC = () => {
         </div>
 
         <p className="text-center mt-8 text-sm text-text-muted">
-          © 2024 CHATCRM PRO. Todos los derechos reservados.
+          © 2024 CRM W Group. Todos los derechos reservados.
         </p>
       </motion.div>
     </div>

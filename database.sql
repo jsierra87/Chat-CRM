@@ -1,4 +1,4 @@
--- CHATCRM PRO - Database Schema
+-- CRM W Group - Database Schema
 -- Note: This is provided as a reference. The app uses a simulated JSON store for compatibility with this environment.
 
 CREATE TABLE IF NOT EXISTS empresas (

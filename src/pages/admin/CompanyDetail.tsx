@@ -100,12 +100,12 @@ const CompanyDetail: React.FC = () => {
             onClick={() => navigate(`/admin/vendedor/${vendedor.id}`)}
             className="bg-bg-sidebar p-4 rounded-xl border border-white/5 hover:border-primary/40 cursor-pointer transition-all flex items-center gap-4 group"
           >
-            <div className="w-12 h-12 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold overflow-hidden">
-              {vendedor.avatar_url ? (
-                <img src={vendedor.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
-              ) : (
-                vendedor.nombre.charAt(0)
-              )}
+            <div className="w-12 h-12 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold overflow-hidden shrink-0">
+              <img 
+                src={vendedor.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${vendedor.email}`} 
+                alt="Avatar" 
+                className="w-full h-full object-cover" 
+              />
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-text-main truncate group-hover:text-primary transition-colors">

@@ -48,54 +48,82 @@ export async function initDB() {
       }
     ];
 
-    // Helper to generate users
-    const generateUsers = (empresaId: number, count: number, prefix: string) => {
+    // Helper to generate users and their networks/chats
+    const populateSellers = (empresaId: number, count: number, prefix: string, serviceInfo: string) => {
+      const types = ['whatsapp', 'instagram', 'facebook', 'messenger', 'tiktok', 'telegram'];
+      
       for (let i = 1; i <= count; i++) {
+        const userId = initialData.usuarios.length + 1;
         initialData.usuarios.push({
-          id: initialData.usuarios.length + 1,
+          id: userId,
           empresa_id: empresaId,
           nombre: `${prefix} ${i}`,
           apellido: 'Vendedor',
-          email: `${prefix.toLowerCase()}${i}@test.com`,
+          email: `${prefix.toLowerCase().replace(/\s+/g, '')}${i}@test.com`,
           password_hash: sellerPassword,
           rol: 'vendedor',
           activo: true,
           created_at: new Date().toISOString()
         });
+
+        // Add all 6 networks for every seller
+        types.forEach((type, index) => {
+          const redId = initialData.redes_sociales.length + 1;
+          initialData.redes_sociales.push({
+            id: redId,
+            vendedor_id: userId,
+            tipo: type as any,
+            usuario_red: `${prefix} ${type} ${i}`,
+            estado: 'conectada',
+            ultima_sync: new Date().toISOString()
+          });
+
+          // Add a sample chat for the first 2 networks of the first seller of each company
+          if (i === 1 && index < 2) {
+            const contactId = initialData.contactos.length + 1;
+            const convId = initialData.conversaciones.length + 1;
+            
+            initialData.contactos.push({
+              id: contactId,
+              vendedor_id: userId,
+              empresa_id: empresaId,
+              nombre: `Cliente ${type.toUpperCase()}`,
+              red_social: type as any,
+              etiqueta: 'prospecto',
+              created_at: new Date().toISOString()
+            });
+
+            initialData.conversaciones.push({
+              id: convId,
+              contacto_id: contactId,
+              vendedor_id: userId,
+              red_social_id: redId,
+              estado: 'pendiente',
+              ultimo_mensaje: `Consulta sobre ${serviceInfo} vía ${type}`,
+              ultimo_mensaje_fecha: new Date().toISOString(),
+              no_leidos: 1
+            });
+
+            initialData.mensajes.push({
+              id: initialData.mensajes.length + 1,
+              conversacion_id: convId,
+              remitente: 'contacto',
+              contenido: `Hola, me interesa saber más sobre ${serviceInfo}.`,
+              tipo: 'texto',
+              leido: false,
+              created_at: new Date().toISOString()
+            });
+          }
+        });
       }
     };
 
-    generateUsers(1, 25, 'Racepoint');
-    generateUsers(2, 12, 'Wylco');
-    generateUsers(3, 6, 'Pro4');
-    generateUsers(4, 7, 'Fornitura');
-    generateUsers(5, 1, 'Coralia');
-
-    // Sample Social Networks for Racepoint 1 (Juan Perez equivalent)
-    initialData.redes_sociales = [
-      { id: 1, vendedor_id: 2, tipo: 'whatsapp', usuario_red: '+506 8888-8888', estado: 'conectada', ultima_sync: new Date().toISOString() },
-      { id: 2, vendedor_id: 2, tipo: 'instagram', usuario_red: '@racepoint_official', estado: 'conectada', ultima_sync: new Date().toISOString() },
-      { id: 3, vendedor_id: 2, tipo: 'telegram', usuario_red: '@racepoint_bot', estado: 'conectada', ultima_sync: new Date().toISOString() }
-    ];
-
-    // Sample Contacts
-    initialData.contactos = [
-      { id: 1, vendedor_id: 2, empresa_id: 1, nombre: 'Juan Pérez', red_social: 'whatsapp', etiqueta: 'lead', created_at: new Date().toISOString() },
-      { id: 2, vendedor_id: 2, empresa_id: 1, nombre: 'María García', red_social: 'instagram', etiqueta: 'vip', created_at: new Date().toISOString() }
-    ];
-
-    // Sample Conversations
-    initialData.conversaciones = [
-      { id: 1, contacto_id: 1, vendedor_id: 2, red_social_id: 1, estado: 'pendiente', ultimo_mensaje: '¿Tienen disponibilidad en Villas Coralia?', ultimo_mensaje_fecha: new Date().toISOString(), no_leidos: 1 },
-      { id: 2, contacto_id: 2, vendedor_id: 2, red_social_id: 2, estado: 'respondida', ultimo_mensaje: 'Me interesa el catálogo de Fornitura...', ultimo_mensaje_fecha: new Date().toISOString(), no_leidos: 0 }
-    ];
-
-    // Sample Messages
-    initialData.mensajes = [
-      { id: 1, conversacion_id: 1, remitente: 'contacto', contenido: 'Hola, ¿Tienen disponibilidad en Villas Coralia?', tipo: 'texto', leido: false, created_at: new Date().toISOString() },
-      { id: 2, conversacion_id: 2, remitente: 'contacto', contenido: 'Me interesa el catálogo de Fornitura...', tipo: 'texto', leido: true, created_at: new Date().toISOString() },
-      { id: 3, conversacion_id: 2, remitente: 'vendedor', contenido: 'Hola María, claro que sí. Te adjunto el catálogo.', tipo: 'texto', leido: true, created_at: new Date().toISOString() }
-    ];
+    populateSellers(1, 25, 'Racepoint', 'ropa de motoristas y cascos AGV');
+    populateSellers(2, 12, 'Wylco', 'sistemas de Car Audio y pantallas');
+    populateSellers(3, 6, 'Pro4', 'accesorios 4x4 y snorkels');
+    populateSellers(4, 7, 'Fornitura', 'muebles premium y sofás modulares');
+    populateSellers(5, 1, 'Villas Coralia', 'villas tipo chalet en el puerto');
+    populateSellers(6, 1, 'Villas Pez Vela', 'chalets exclusivos frente al mar');
 
     fs.writeFileSync(DB_FILE, JSON.stringify(initialData, null, 2));
   }

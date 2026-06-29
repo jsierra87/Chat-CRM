@@ -149,6 +149,109 @@ async function startServer() {
     res.json({ success: true, data: mensajes });
   });
 
+  app.get('/api/admin/vendedores', authenticateToken, isAdmin, (req, res) => {
+    const db = getData();
+    const vendedores = db.usuarios
+      .filter((u: any) => u.rol === 'vendedor')
+      .map((v: any) => {
+        const empresa = db.empresas.find((e: any) => e.id === v.empresa_id);
+        const { password_hash, ...vWithoutPassword } = v;
+        return { ...vWithoutPassword, empresa_nombre: empresa?.nombre || 'Sin asignar' };
+      });
+    res.json({ success: true, data: vendedores });
+  });
+
+  app.post('/api/admin/vendedores', authenticateToken, isAdmin, (req, res) => {
+    const { nombre, apellido, email, password, empresa_id } = req.body;
+    const db = getData();
+    
+    if (db.usuarios.find((u: any) => u.email === email)) {
+      return res.status(400).json({ success: false, message: 'El email ya está registrado' });
+    }
+
+    const nuevoVendedor = {
+      id: db.usuarios.length + 1,
+      empresa_id: parseInt(empresa_id),
+      nombre,
+      apellido,
+      email,
+      password_hash: password, // In a real app, hash this
+      rol: 'vendedor',
+      activo: true,
+      created_at: new Date().toISOString()
+    };
+
+    db.usuarios.push(nuevoVendedor);
+    saveData(db);
+    res.json({ success: true, data: nuevoVendedor });
+  });
+
+  app.put('/api/admin/vendedores/:id', authenticateToken, isAdmin, (req, res) => {
+    const { id } = req.params;
+    const { nombre, apellido, email, empresa_id, activo } = req.body;
+    const db = getData();
+    const index = db.usuarios.findIndex((u: any) => u.id === parseInt(id) && u.rol === 'vendedor');
+    
+    if (index === -1) return res.status(404).json({ success: false, message: 'Vendedor no encontrado' });
+
+    db.usuarios[index] = {
+      ...db.usuarios[index],
+      nombre: nombre || db.usuarios[index].nombre,
+      apellido: apellido || db.usuarios[index].apellido,
+      email: email || db.usuarios[index].email,
+      empresa_id: empresa_id !== undefined ? parseInt(empresa_id) : db.usuarios[index].empresa_id,
+      activo: activo !== undefined ? activo : db.usuarios[index].activo
+    };
+
+    saveData(db);
+    res.json({ success: true, data: db.usuarios[index] });
+  });
+
+  app.delete('/api/admin/vendedores/:id', authenticateToken, isAdmin, (req, res) => {
+    const { id } = req.params;
+    const db = getData();
+    const initialLength = db.usuarios.length;
+    db.usuarios = db.usuarios.filter((u: any) => !(u.id === parseInt(id) && u.rol === 'vendedor'));
+    
+    if (db.usuarios.length === initialLength) {
+      return res.status(404).json({ success: false, message: 'Vendedor no encontrado' });
+    }
+
+    saveData(db);
+    res.json({ success: true, message: 'Vendedor eliminado correctamente' });
+  });
+
+  app.post('/api/conversacion/:id/mensajes', authenticateToken, (req, res) => {
+    const { id } = req.params;
+    const { contenido, tipo = 'texto' } = req.body;
+    const user = (req as any).user;
+    const db = getData();
+
+    const newMessage = {
+      id: db.mensajes.length + 1,
+      conversacion_id: parseInt(id),
+      remitente: user.rol === 'admin' ? 'admin' : 'vendedor',
+      contenido,
+      tipo,
+      leido: true,
+      enviado_por_admin: user.rol === 'admin',
+      created_at: new Date().toISOString()
+    };
+
+    db.mensajes.push(newMessage);
+    
+    // Update last message in conversation
+    const convIndex = db.conversaciones.findIndex((c: any) => c.id === parseInt(id));
+    if (convIndex !== -1) {
+      db.conversaciones[convIndex].ultimo_mensaje = contenido;
+      db.conversaciones[convIndex].ultimo_mensaje_fecha = newMessage.created_at;
+      db.conversaciones[convIndex].estado = 'respondida';
+    }
+
+    saveData(db);
+    res.json({ success: true, data: newMessage });
+  });
+
   // --- Vite / Production Setup ---
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({

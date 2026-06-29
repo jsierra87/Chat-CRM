@@ -31,7 +31,7 @@ export const useAuthStore = create<AuthState>()(
       isAdmin: () => get().user?.rol === 'admin',
     }),
     {
-      name: 'chatcrm-auth',
+      name: 'crm-w-group-auth',
     }
   )
 );

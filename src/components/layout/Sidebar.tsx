@@ -61,7 +61,7 @@ const Sidebar: React.FC = () => {
           C
         </div>
         <h1 className="text-lg font-bold tracking-tight text-white uppercase">
-          CHATCRM <span className="text-primary">PRO</span>
+          CRM W <span className="text-primary">GROUP</span>
         </h1>
       </div>
 
@@ -140,12 +140,12 @@ const Sidebar: React.FC = () => {
       </nav>
 
       <div className="p-6 bg-black/20 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-bg-base border-2 border-primary flex items-center justify-center overflow-hidden">
-          {user?.avatar_url ? (
-            <img src={user.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
-          ) : (
-            <UserIcon size={18} className="text-primary" />
-          )}
+        <div className="w-10 h-10 rounded-full bg-bg-base border-2 border-primary flex items-center justify-center overflow-hidden shrink-0">
+          <img 
+            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email || 'Admin'}`} 
+            alt="User Avatar" 
+            className="w-full h-full object-cover" 
+          />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-text-main truncate">{user?.nombre || 'Admin'}</p>

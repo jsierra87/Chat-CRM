@@ -5,6 +5,7 @@ import { ProtectedRoute } from '../components/layout/Layout';
 import Empresas from '../pages/admin/Empresas';
 import CompanyDetail from '../pages/admin/CompanyDetail';
 import SellerDashboardAdmin from '../pages/admin/SellerDashboard';
+import Sellers from '../pages/admin/Sellers';
 
 // Placeholder pages for the routes
 const AdminDashboard = () => (
@@ -130,7 +131,7 @@ const AppRouter: React.FC = () => {
           <Route path="/admin/empresas" element={<Empresas />} />
           <Route path="/admin/empresa/:id" element={<CompanyDetail />} />
           <Route path="/admin/vendedor/:id" element={<SellerDashboardAdmin />} />
-          <Route path="/admin/vendedores" element={<div>Gestión de Vendedores</div>} />
+          <Route path="/admin/vendedores" element={<Sellers />} />
         </Route>
 
         {/* Seller Routes */}
