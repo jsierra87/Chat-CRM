@@ -252,9 +252,9 @@ async function startServer() {
   app.get('/api/vendedor/whatsapp/sessions', authenticateToken, (req, res) => {
     const user = (req as any).user;
     if (user.rol !== 'vendedor') return res.status(403).json({ success: false, message: 'Acceso denegado' });
-    
+
     const sessions = whatsappEngine.getSessions(user.id);
-    res.json({ success: true, data: sessions.map(s => ({ id: s.id, name: s.name, status: s.status })) });
+    res.json({ success: true, data: sessions.map(s => ({ id: s.id, name: s.name, status: s.status, qr: s.qr })) });
   });
 
   app.post('/api/vendedor/whatsapp/session', authenticateToken, async (req, res) => {
