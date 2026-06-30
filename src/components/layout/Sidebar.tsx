@@ -6,9 +6,11 @@ import {
   Users, 
   MessageSquare, 
   Share2, 
+  Calendar,
   LogOut,
   User as UserIcon,
   Circle,
+  Settings,
   ChevronDown,
   ChevronRight
 } from 'lucide-react';
@@ -26,6 +28,7 @@ const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const [empresasOpen, setEmpresasOpen] = useState(false);
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     if (user?.rol === 'admin' && token) {
@@ -35,6 +38,20 @@ const Sidebar: React.FC = () => {
         .then(res => res.json())
         .then(data => {
           if (data.success) setEmpresas(data.data);
+        });
+    }
+
+    if (user?.rol === 'vendedor' && token) {
+      // Fetch chats to count unread messages
+      fetch('/api/vendedor/chats', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            const total = data.data.reduce((acc: number, chat: any) => acc + (chat.no_leidos || 0), 0);
+            setUnreadCount(total);
+          }
         });
     }
   }, [user?.rol, token]);
@@ -50,8 +67,10 @@ const Sidebar: React.FC = () => {
 
   const sellerMenu = [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/vendedor/dashboard' },
-    { name: 'Mis Chats', icon: MessageSquare, path: '/vendedor/chats' },
-    { name: 'Redes Sociales', icon: Share2, path: '/vendedor/redes' },
+    { name: 'Comunicaciones', icon: MessageSquare, path: '/vendedor/chats', badge: true },
+    { name: 'Clientes', icon: Users, path: '/vendedor/clientes' },
+    { name: 'Calendario', icon: Calendar, path: '/vendedor/calendario' },
+    { name: 'Ajustes', icon: Settings, path: '/vendedor/ajustes' },
   ];
 
   return (
@@ -66,19 +85,26 @@ const Sidebar: React.FC = () => {
       </div>
 
       <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
-        {(user?.rol === 'admin' ? adminMenu : sellerMenu).map((item) => (
+        {(user?.rol === 'admin' ? adminMenu : sellerMenu).map((item: any) => (
           <NavLink
             key={item.path}
             to={item.path}
             className={({ isActive }) => `
-              flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm
+              flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 text-sm
               ${isActive 
                 ? 'bg-primary/10 text-primary font-medium' 
                 : 'text-text-muted hover:bg-white/3 hover:text-text-main'}
             `}
           >
-            <item.icon size={18} />
-            <span>{item.name}</span>
+            <div className="flex items-center gap-3">
+              <item.icon size={18} />
+              <span>{item.name}</span>
+            </div>
+            {item.badge && unreadCount > 0 && (
+              <span className="bg-danger text-white text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse shadow-lg shadow-danger/20">
+                {unreadCount}
+              </span>
+            )}
           </NavLink>
         ))}
 
@@ -149,7 +175,6 @@ const Sidebar: React.FC = () => {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-text-main truncate">{user?.nombre || 'Admin'}</p>
-          <p className="text-xs text-text-muted capitalize">Admin</p>
         </div>
         <button
           onClick={handleLogout}

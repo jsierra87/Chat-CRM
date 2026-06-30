@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { createServer as createViteServer } from 'vite';
 import { initDB, getData, saveData } from './server/db';
+import { whatsappEngine } from './src/server/whatsappEngine';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'chatcrm_pro_secret_key_2024';
 
@@ -219,6 +220,75 @@ async function startServer() {
 
     saveData(db);
     res.json({ success: true, message: 'Vendedor eliminado correctamente' });
+  });
+
+  // --- Seller Endpoints ---
+  app.get('/api/vendedor/chats', authenticateToken, (req, res) => {
+    const user = (req as any).user;
+    if (user.rol !== 'vendedor') return res.status(403).json({ success: false, message: 'Acceso denegado' });
+    
+    const db = getData();
+    const conversations = db.conversaciones.filter((c: any) => c.vendedor_id === user.id);
+    
+    const enriched = conversations.map((c: any) => {
+      const contacto = db.contactos.find((contact: any) => contact.id === c.contacto_id);
+      const red = db.redes_sociales.find((r: any) => r.id === c.red_social_id);
+      return { ...c, contacto, red_social: red };
+    });
+    
+    res.json({ success: true, data: enriched });
+  });
+
+  app.get('/api/vendedor/redes', authenticateToken, (req, res) => {
+    const user = (req as any).user;
+    if (user.rol !== 'vendedor') return res.status(403).json({ success: false, message: 'Acceso denegado' });
+    
+    const db = getData();
+    const redes = db.redes_sociales.filter((r: any) => r.vendedor_id === user.id);
+    res.json({ success: true, data: redes });
+  });
+
+  // --- WhatsApp Web Engine Endpoints ---
+  app.get('/api/vendedor/whatsapp/sessions', authenticateToken, (req, res) => {
+    const user = (req as any).user;
+    if (user.rol !== 'vendedor') return res.status(403).json({ success: false, message: 'Acceso denegado' });
+    
+    const sessions = whatsappEngine.getSessions(user.id);
+    res.json({ success: true, data: sessions.map(s => ({ id: s.id, name: s.name, status: s.status })) });
+  });
+
+  app.post('/api/vendedor/whatsapp/session', authenticateToken, async (req, res) => {
+    const user = (req as any).user;
+    const { name } = req.body;
+    if (user.rol !== 'vendedor') return res.status(403).json({ success: false, message: 'Acceso denegado' });
+    if (!name) return res.status(400).json({ success: false, message: 'Nombre de sesión requerido' });
+
+    const session = await whatsappEngine.createSession(user.id, name);
+    res.json({ success: true, data: { id: session.id, name: session.name, status: session.status } });
+  });
+
+  app.post('/api/vendedor/whatsapp/session/:id/start', authenticateToken, async (req, res) => {
+    const user = (req as any).user;
+    const { id } = req.params;
+    if (user.rol !== 'vendedor') return res.status(403).json({ success: false, message: 'Acceso denegado' });
+
+    try {
+      const session = await whatsappEngine.startSession(id);
+      res.json({ success: true, message: 'Sesión iniciada', status: session.status });
+    } catch (err: any) {
+      res.status(500).json({ success: false, message: err.message });
+    }
+  });
+
+  app.get('/api/vendedor/whatsapp/session/:id/status', authenticateToken, (req, res) => {
+    const user = (req as any).user;
+    const { id } = req.params;
+    if (user.rol !== 'vendedor') return res.status(403).json({ success: false, message: 'Acceso denegado' });
+
+    const status = whatsappEngine.getSessionStatus(id);
+    if (!status) return res.status(404).json({ success: false, message: 'Sesión no encontrada' });
+
+    res.json({ success: true, data: status });
   });
 
   app.post('/api/conversacion/:id/mensajes', authenticateToken, (req, res) => {

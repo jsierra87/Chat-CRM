@@ -1,17 +1,13 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
 import { 
-  ArrowLeft, 
   MessageSquare, 
   Share2, 
   Circle, 
-  ExternalLink, 
   Clock,
-  CheckCircle2,
-  AlertCircle,
   Send,
   X,
-  FilterX
+  FilterX,
+  ArrowLeft
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 
@@ -47,10 +43,7 @@ interface Chat {
   no_leidos: number;
 }
 
-const SellerDashboard: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const [vendedor, setVendedor] = useState<any>(null);
+const Comunicaciones: React.FC = () => {
   const [redes, setRedes] = useState<RedSocial[]>([]);
   const [chats, setChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,7 +52,7 @@ const SellerDashboard: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
-  const { token } = useAuthStore();
+  const { token, user } = useAuthStore();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -70,29 +63,28 @@ const SellerDashboard: React.FC = () => {
 
   const fetchData = async () => {
     try {
-      const [venderRes, redesRes, chatsRes] = await Promise.all([
-        fetch(`/api/admin/vendedor/${id}`, { headers: { 'Authorization': `Bearer ${token}` } }),
-        fetch(`/api/admin/vendedor/${id}/redes`, { headers: { 'Authorization': `Bearer ${token}` } }),
-        fetch(`/api/admin/vendedor/${id}/chats`, { headers: { 'Authorization': `Bearer ${token}` } })
+      const [redesRes, chatsRes] = await Promise.all([
+        fetch('/api/vendedor/redes', { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch('/api/vendedor/chats', { headers: { 'Authorization': `Bearer ${token}` } })
       ]);
       
-      const venderData = await venderRes.json();
       const redesData = await redesRes.json();
       const chatsData = await chatsRes.json();
       
-      if (venderData.success) setVendedor(venderData.data);
       if (redesData.success) setRedes(redesData.data);
       if (chatsData.success) setChats(chatsData.data);
     } catch (error) {
-      console.error('Error fetching seller details:', error);
+      console.error('Error fetching communications data:', error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchData();
-  }, [id, token]);
+    if (token) {
+      fetchData();
+    }
+  }, [token]);
 
   const fetchMessages = async (chatId: number) => {
     try {
@@ -130,7 +122,6 @@ const SellerDashboard: React.FC = () => {
       if (data.success) {
         setMessages([...messages, data.data]);
         setNewMessage('');
-        // Refresh chats to update last message
         fetchData();
       }
     } catch (error) {
@@ -159,45 +150,25 @@ const SellerDashboard: React.FC = () => {
   }
 
   return (
-    <div>
-      <button 
-        onClick={() => navigate(-1)}
-        className="flex items-center gap-2 text-text-muted hover:text-text-main mb-6 transition-colors text-sm font-medium"
-      >
-        <ArrowLeft size={16} />
-        <span>Volver</span>
-      </button>
-
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center text-primary font-bold text-2xl overflow-hidden">
-            <img 
-              src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${vendedor?.email || id}`} 
-              alt="Seller Avatar" 
-              className="w-full h-full object-cover" 
-            />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold">{vendedor?.nombre} {vendedor?.apellido}</h1>
-            <p className="text-text-muted text-sm">{vendedor?.email} • Vendedor</p>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <span className="px-3 py-1 bg-success/10 text-success border border-success/20 rounded-full text-xs font-bold flex items-center gap-1">
-            <Circle size={8} className="fill-success" />
-            VENDEDOR ACTIVO
-          </span>
+    <div className="h-[calc(100vh-120px)]">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <MessageSquare className="text-primary" />
+            Comunicaciones
+          </h1>
+          <p className="text-text-muted text-sm mt-1">Gestiona tus conversaciones de todas las redes sociales.</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
         {/* Social Networks Section */}
-        <div className="lg:col-span-1 space-y-6">
+        <div className="lg:col-span-1 space-y-6 overflow-y-auto pr-2">
           <div className="stat-card">
             <div className="flex items-center justify-between mb-6">
               <h3 className="font-bold flex items-center gap-2">
                 <Share2 size={18} className="text-primary" />
-                Redes Conectadas
+                Mis Redes
               </h3>
               <div className="flex items-center gap-2">
                 {filterNetwork && (
@@ -209,7 +180,7 @@ const SellerDashboard: React.FC = () => {
                     <FilterX size={14} />
                   </button>
                 )}
-                <span className="text-xs text-text-muted font-bold uppercase">{redes.length} / 6</span>
+                <span className="text-xs text-text-muted font-bold uppercase">{redes.filter(r => r.estado === 'conectada').length} Activas</span>
               </div>
             </div>
             <div className="space-y-3">
@@ -256,32 +227,12 @@ const SellerDashboard: React.FC = () => {
               })}
             </div>
           </div>
-
-          <div className="stat-card">
-            <h3 className="font-bold mb-4 flex items-center gap-2">
-              <Clock size={18} className="text-primary" />
-              Actividad Reciente
-            </h3>
-            <div className="space-y-4">
-              {[1, 2, 3].map((_, i) => (
-                <div key={i} className="flex gap-3 relative pb-4 last:pb-0">
-                  <div className="absolute left-1.5 top-5 bottom-0 w-px bg-white/5 last:hidden" />
-                  <div className="w-3 h-3 rounded-full bg-primary/40 border border-primary mt-1 relative z-10" />
-                  <div>
-                    <p className="text-xs text-text-main font-medium">Conversación respondida</p>
-                    <p className="text-[10px] text-text-muted">Hace {i * 5 + 2} minutos</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
 
         {/* Chats Section */}
         <div className="lg:col-span-2">
-          <div className="stat-card h-full flex flex-col p-0 overflow-hidden min-h-[600px]">
+          <div className="stat-card h-full flex flex-col p-0 overflow-hidden min-h-[500px]">
             {selectedChat ? (
-              /* Chat View */
               <div className="flex flex-col h-full">
                 <div className="p-4 border-b border-white/5 flex justify-between items-center bg-white/2">
                   <div className="flex items-center gap-3">
@@ -316,7 +267,7 @@ const SellerDashboard: React.FC = () => {
 
                 <div 
                   ref={scrollRef}
-                  className="flex-1 overflow-y-auto p-5 space-y-4 bg-black/20"
+                  className="flex-1 overflow-y-auto p-5 space-y-4 bg-black/10"
                 >
                   {messages.map((msg) => (
                     <div 
@@ -330,15 +281,12 @@ const SellerDashboard: React.FC = () => {
                           : 'bg-primary text-white rounded-tr-none'}
                       `}>
                         <p>{msg.contenido}</p>
-                        <p className={`text-[9px] mt-1 opacity-60 text-right`}>
+                        <p className="text-[9px] mt-1 opacity-60 text-right">
                           {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
                     </div>
                   ))}
-                  {messages.length === 0 && (
-                    <div className="text-center py-10 opacity-30 italic text-sm">Iniciando conversación...</div>
-                  )}
                 </div>
 
                 <form onSubmit={handleSendMessage} className="p-4 border-t border-white/5 bg-white/2 flex gap-3">
@@ -352,28 +300,19 @@ const SellerDashboard: React.FC = () => {
                   <button 
                     type="submit"
                     disabled={!newMessage.trim() || sending}
-                    className="w-10 h-10 bg-primary text-white rounded-xl flex items-center justify-center hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-primary/20"
+                    className="w-10 h-10 bg-primary text-white rounded-xl flex items-center justify-center hover:bg-primary-hover disabled:opacity-50 transition-all"
                   >
                     <Send size={18} className={sending ? 'animate-pulse' : ''} />
                   </button>
                 </form>
               </div>
             ) : (
-              /* Chats List */
               <>
                 <div className="p-5 border-b border-white/5 flex justify-between items-center bg-white/2">
-                  <div className="flex flex-col">
-                    <h3 className="font-bold flex items-center gap-2">
-                      <MessageSquare size={18} className="text-primary" />
-                      Conversaciones Activas
-                    </h3>
-                    {filterNetwork && (
-                      <span className="text-[10px] text-primary font-bold uppercase mt-1">Filtrado por: {filterNetwork}</span>
-                    )}
-                  </div>
-                  <div className="flex gap-2">
-                    <button className="text-xs bg-bg-base px-3 py-1.5 rounded-lg border border-white/10 text-text-muted hover:text-text-main transition-colors">Filtrar</button>
-                  </div>
+                  <h3 className="font-bold flex items-center gap-2">
+                    <MessageSquare size={18} className="text-primary" />
+                    Conversaciones Activas
+                  </h3>
                 </div>
 
                 <div className="flex-1 overflow-y-auto divide-y divide-white/5">
@@ -395,7 +334,7 @@ const SellerDashboard: React.FC = () => {
                           <div className="flex items-center justify-between mb-1">
                             <h4 className="font-bold text-sm flex items-center gap-2">
                               {chat.contacto.nombre}
-                              <span className="text-[10px] px-1.5 py-0.5 bg-white/10 rounded uppercase tracking-wider text-text-muted">
+                              <span className="text-[10px] px-1.5 py-0.5 bg-white/10 rounded uppercase text-text-muted">
                                 {chat.red_social.tipo}
                               </span>
                             </h4>
@@ -411,26 +350,15 @@ const SellerDashboard: React.FC = () => {
                               {chat.no_leidos}
                             </span>
                           )}
-                          <div className={`text-[10px] font-bold uppercase ${chat.estado === 'pendiente' ? 'text-danger' : 'text-success'}`}>
-                            {chat.estado}
-                          </div>
                         </div>
                       </div>
                     </div>
                   ))}
 
                   {filteredChats.length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-20 text-text-muted">
-                      <MessageSquare size={40} className="mb-4 opacity-20" />
-                      <p>No hay conversaciones que coincidan con el filtro</p>
-                      {filterNetwork && (
-                        <button 
-                          onClick={() => setFilterNetwork(null)}
-                          className="mt-4 text-xs text-primary hover:underline"
-                        >
-                          Ver todas las conversaciones
-                        </button>
-                      )}
+                    <div className="flex flex-col items-center justify-center py-20 text-text-muted opacity-30">
+                      <MessageSquare size={40} className="mb-4" />
+                      <p>No hay conversaciones activas</p>
                     </div>
                   )}
                 </div>
@@ -443,4 +371,4 @@ const SellerDashboard: React.FC = () => {
   );
 };
 
-export default SellerDashboard;
+export default Comunicaciones;

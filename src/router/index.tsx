@@ -6,6 +6,8 @@ import Empresas from '../pages/admin/Empresas';
 import CompanyDetail from '../pages/admin/CompanyDetail';
 import SellerDashboardAdmin from '../pages/admin/SellerDashboard';
 import Sellers from '../pages/admin/Sellers';
+import Comunicaciones from '../pages/seller/Comunicaciones';
+import SellerSettings from '../pages/seller/Settings';
 
 // Placeholder pages for the routes
 const AdminDashboard = () => (
@@ -119,6 +121,24 @@ const SellerDashboard = () => (
   </div>
 );
 
+const SellerClients = () => (
+  <div>
+    <h1 className="text-2xl font-bold mb-6">Mis Clientes</h1>
+    <div className="stat-card p-10 text-center opacity-50 italic">
+      Listado de clientes y leads asignados...
+    </div>
+  </div>
+);
+
+const SellerCalendar = () => (
+  <div>
+    <h1 className="text-2xl font-bold mb-6">Calendario de Citas</h1>
+    <div className="stat-card p-10 text-center opacity-50 italic">
+      Agenda de seguimientos y reuniones...
+    </div>
+  </div>
+);
+
 const AppRouter: React.FC = () => {
   return (
     <BrowserRouter>
@@ -137,8 +157,10 @@ const AppRouter: React.FC = () => {
         {/* Seller Routes */}
         <Route element={<ProtectedRoute allowedRoles={['vendedor']} />}>
           <Route path="/vendedor/dashboard" element={<SellerDashboard />} />
-          <Route path="/vendedor/chats" element={<div>Mis Chats</div>} />
-          <Route path="/vendedor/redes" element={<div>Configuración de Redes</div>} />
+          <Route path="/vendedor/chats" element={<Comunicaciones />} />
+          <Route path="/vendedor/clientes" element={<SellerClients />} />
+          <Route path="/vendedor/calendario" element={<SellerCalendar />} />
+          <Route path="/vendedor/ajustes" element={<SellerSettings />} />
         </Route>
 
         {/* Redirects */}

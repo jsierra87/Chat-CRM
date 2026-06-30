@@ -152,22 +152,13 @@ const Login: React.FC = () => {
                 <span>Admin Principal</span>
                 <span className="text-text-muted group-hover:text-primary font-mono text-[10px]">admin@chatcrm.com</span>
               </button>
-              <div className="grid grid-cols-2 gap-2">
-                <button 
-                  onClick={() => quickLogin('juan@racepoint.com', 'Seller2024!')}
-                  className="text-xs p-3 rounded-lg bg-white/3 border border-white/5 text-text-main hover:bg-primary/10 hover:border-primary/30 transition-all text-left"
-                >
-                  <p className="font-semibold">Vendedor 1</p>
-                  <p className="text-[10px] text-text-muted">Racepoint</p>
-                </button>
-                <button 
-                  onClick={() => quickLogin('maria@wylco.com', 'Seller2024!')}
-                  className="text-xs p-3 rounded-lg bg-white/3 border border-white/5 text-text-main hover:bg-primary/10 hover:border-primary/30 transition-all text-left"
-                >
-                  <p className="font-semibold">Vendedor 2</p>
-                  <p className="text-[10px] text-text-muted">Wylco</p>
-                </button>
-              </div>
+              <button 
+                onClick={() => quickLogin('racepoint1@test.com', 'Seller2024!')}
+                className="text-xs p-3 rounded-lg bg-white/3 border border-white/5 text-text-main hover:bg-primary/10 hover:border-primary/30 transition-all flex items-center justify-between group"
+              >
+                <span>Vendedor de Prueba</span>
+                <span className="text-text-muted group-hover:text-primary font-mono text-[10px]">racepoint1@test.com</span>
+              </button>
             </div>
           </div>
         </div>
